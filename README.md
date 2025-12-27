@@ -45,7 +45,7 @@
   <img src="Client.png" alt="client" width="800" style="border-radius: 8px; margin-top: 10px;"/>
 </div>
 
-- 如果使用 chat 时出现以下限制，如下图
+- 如果使用 chat 时出现以下提示，如下图
 <div align="center">
   <img src="connection_failed.png" alt="client" width="500" style="border-radius: 8px; margin-top: 10px;"/>
 </div>
