@@ -105,7 +105,7 @@ get_downloads_dir() {
 # 获取最新版本
 get_latest_version() {
     echo -e "${CYAN}ℹ️ 正在检查最新版本...${NC}"
-    latest_release=$(curl -s https://api.github.com/repos/yeongpin/cursor-free-vip/releases/latest) || {
+    latest_release=$(curl -s https://github.com/SHANMUGAM070106/cursor-free-vip/releases/latest) || {
         echo -e "${RED}❌ 无法获取最新版本信息${NC}"
         exit 1
     }
@@ -149,7 +149,7 @@ install_cursor_free_vip() {
     local downloads_dir=$(get_downloads_dir)
     local binary_name="CursorFreeVIP_${VERSION}_${OS}"
     local binary_path="${downloads_dir}/${binary_name}"
-    local download_url="https://github.com/yeongpin/cursor-free-vip/releases/download/v${VERSION}/${binary_name}"
+    local download_url="https://github.com/SHANMUGAM070106/cursor-free-vip/releases/download/v${VERSION}/${binary_name}"
     if [ -f "${binary_path}" ]; then
         echo -e "${GREEN}✅ 已存在安装文件${NC}"
         echo -e "${CYAN}ℹ️ 路径: ${binary_path}${NC}"
@@ -182,7 +182,7 @@ install_cursor_free_vip() {
         if [[ "$OS" == "mac_arm64" || "$OS" == "mac_intel" ]]; then
             OS="mac"
             binary_name="CursorFreeVIP_${VERSION}_${OS}"
-            download_url="https://github.com/yeongpin/cursor-free-vip/releases/download/v${VERSION}/${binary_name}"
+            download_url="https://github.com/SHANMUGAM070106/cursor-free-vip/releases/download/v${VERSION}/${binary_name}"
             echo -e "${CYAN}ℹ️ 新下载链接: ${download_url}${NC}"
             if ! curl --output /dev/null --silent --head --fail "$download_url"; then
                 echo -e "${RED}❌ 新下载链接不存在${NC}"
@@ -191,7 +191,7 @@ install_cursor_free_vip() {
         elif [[ "$OS" == "linux_x64" || "$OS" == "linux_arm64" ]]; then
             OS="linux"
             binary_name="CursorFreeVIP_${VERSION}_${OS}"
-            download_url="https://github.com/yeongpin/cursor-free-vip/releases/download/v${VERSION}/${binary_name}"
+            download_url="https://github.com/SHANMUGAM070106/cursor-free-vip/releases/download/v${VERSION}/${binary_name}"
             echo -e "${CYAN}ℹ️ 新下载链接: ${download_url}${NC}"
             if ! curl --output /dev/null --silent --head --fail "$download_url"; then
                 echo -e "${RED}❌ 新下载链接不存在${NC}"
